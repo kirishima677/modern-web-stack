@@ -1,0 +1,39 @@
+{
+  "name": "modern-web-stack",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "packageManager": "pnpm@11.5.2",
+  "engines": {
+    "node": "24.x",
+    "pnpm": ">=11.0.0"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n shared,backend,frontend -c yellow,cyan,magenta \"pnpm dev:shared\" \"pnpm dev:backend\" \"pnpm dev:frontend\"",
+    "dev:shared": "pnpm --filter @modern-web-stack/shared dev",
+    "dev:frontend": "pnpm --filter @modern-web-stack/frontend dev",
+    "dev:backend": "pnpm --filter @modern-web-stack/backend dev",
+    "build": "pnpm --filter @modern-web-stack/shared build && pnpm --filter @modern-web-stack/backend build && pnpm --filter @modern-web-stack/frontend build",
+    "lint": "pnpm --filter @modern-web-stack/shared lint && pnpm --filter @modern-web-stack/backend lint && pnpm --filter @modern-web-stack/frontend lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm --filter @modern-web-stack/shared typecheck && pnpm --filter @modern-web-stack/backend typecheck && pnpm --filter @modern-web-stack/frontend typecheck",
+    "test": "pnpm --filter @modern-web-stack/backend test && pnpm --filter @modern-web-stack/frontend test",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "db:generate": "pnpm --filter @modern-web-stack/backend db:generate",
+    "db:migrate": "pnpm --filter @modern-web-stack/backend db:migrate",
+    "db:seed": "pnpm --filter @modern-web-stack/backend db:seed",
+    "db:studio": "pnpm --filter @modern-web-stack/backend db:studio"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.34.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.3.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.41.0"
+  }
+}
