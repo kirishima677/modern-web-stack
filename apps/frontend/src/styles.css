@@ -1,0 +1,139 @@
+:root {
+  color: #111827;
+  background: #f8fafc;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+  line-height: 1.5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+a {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+.layout {
+  min-height: 100vh;
+}
+
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: #111827;
+  color: #ffffff;
+}
+
+.site-title,
+.nav-link,
+.button-link,
+.card-actions a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.site-nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.nav-link-active {
+  text-decoration: underline;
+}
+
+.page-content {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+}
+
+.stack {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.page-header,
+.user-card,
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.button-link,
+.user-form button,
+.card-actions button {
+  padding: 0.625rem 1rem;
+  border: 1px solid #111827;
+  border-radius: 0.5rem;
+  background: #111827;
+  color: #ffffff;
+}
+
+.user-list {
+  display: grid;
+  gap: 1rem;
+  padding: 0;
+  list-style: none;
+}
+
+.user-card,
+.status-panel,
+.user-form {
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+}
+
+.card-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.card-actions button {
+  background: #dc2626;
+  border-color: #dc2626;
+}
+
+.user-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.form-field {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.form-field input {
+  padding: 0.625rem 0.75rem;
+  border: 1px solid #9ca3af;
+  border-radius: 0.5rem;
+}
+
+.field-error,
+.form-error {
+  margin: 0;
+  color: #b91c1c;
+}
