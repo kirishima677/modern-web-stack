@@ -107,4 +107,27 @@ describe('createApp', () => {
 
     await app.close()
   })
+
+  it('returns 400 for an empty JSON body on delete requests', async () => {
+    const app = await createApp({
+      userService: createMockUserService(),
+      logger: false,
+    })
+
+    const response = await app.inject({
+      method: 'DELETE',
+      url: '/api/users/user-1',
+      headers: {
+        'content-type': 'application/json',
+      },
+    })
+
+    expect(response.statusCode).toBe(400)
+    expect(response.json()).toEqual({
+      error: 'FastifyError',
+      message: "Body cannot be empty when content-type is set to 'application/json'",
+    })
+
+    await app.close()
+  })
 })

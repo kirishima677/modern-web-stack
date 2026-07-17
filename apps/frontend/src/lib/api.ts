@@ -18,12 +18,15 @@ export const request = async <T>(
   options: RequestInit,
   schema: ZodType<T>,
 ): Promise<T> => {
+  const headers = new Headers(options.headers)
+
+  if (options.body !== undefined && options.body !== null) {
+    headers.set('Content-Type', 'application/json')
+  }
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers ?? {}),
-    },
     ...options,
+    headers,
   })
 
   const payload: unknown = await response.json()

@@ -36,6 +36,20 @@ export const createApp = async ({
       return
     }
 
+    if (
+      error instanceof Error &&
+      'statusCode' in error &&
+      typeof error.statusCode === 'number' &&
+      error.statusCode >= 400 &&
+      error.statusCode < 500
+    ) {
+      reply.status(error.statusCode).send({
+        error: error.name,
+        message: error.message,
+      })
+      return
+    }
+
     app.log.error(error)
     reply.status(500).send({
       error: 'Internal Server Error',
