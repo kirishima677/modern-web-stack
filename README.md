@@ -53,7 +53,7 @@ Node.js、TypeScript、React を使って学習できる、最小構成のフル
 
 ## 4. Node.js および pnpm の推奨バージョン
 
-- Node.js: 24.x (LTS)
+- Node.js: 26.x
 - pnpm: 11.x
 
 ## 5. セットアップ手順
