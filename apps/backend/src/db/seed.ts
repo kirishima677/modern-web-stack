@@ -4,7 +4,8 @@ import { createUserInputSchema } from '@modern-web-stack/shared'
 
 import { loadEnv } from '../config.js'
 import { createDatabaseClient } from './client.js'
-import { createDatabaseUserService } from '../services/user-service.js'
+import { createDrizzleUserRepository } from '../repositories/user-repository.js'
+import { createUserService } from '../services/user-service.js'
 
 const seedUsers = [
   createUserInputSchema.parse({
@@ -20,7 +21,8 @@ const seedUsers = [
 const run = async (): Promise<void> => {
   const env = loadEnv()
   const client = createDatabaseClient(env.DATABASE_URL)
-  const userService = createDatabaseUserService(client.db)
+  const userRepository = createDrizzleUserRepository(client.db)
+  const userService = createUserService(userRepository)
 
   try {
     const existing = await userService.list()

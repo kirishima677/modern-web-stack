@@ -1,7 +1,12 @@
 import cors from '@fastify/cors'
 import Fastify, { type FastifyInstance } from 'fastify'
 
-import { AppError, isDatabaseConflictError } from './errors.js'
+import {
+  AppError,
+  DuplicateEmailError,
+  UserNotFoundError,
+  ValidationError,
+} from './errors.js'
 import healthRoutes from './routes/health.js'
 import usersRoutes from './routes/users.js'
 import type { UserService } from './services/user-service.js'
@@ -10,6 +15,13 @@ export interface CreateAppOptions {
   userService: UserService
   logger?: boolean
 }
+
+const isDomainError = (
+  error: unknown,
+): error is ValidationError | DuplicateEmailError | UserNotFoundError =>
+  error instanceof ValidationError ||
+  error instanceof DuplicateEmailError ||
+  error instanceof UserNotFoundError
 
 export const createApp = async ({
   userService,
@@ -22,17 +34,17 @@ export const createApp = async ({
   })
 
   app.setErrorHandler((error, _request, reply) => {
-    if (error instanceof AppError) {
+    if (isDomainError(error)) {
       reply
         .status(error.statusCode)
         .send({ error: error.name, message: error.message })
       return
     }
 
-    if (isDatabaseConflictError(error)) {
+    if (error instanceof AppError) {
       reply
-        .status(400)
-        .send({ error: 'Bad Request', message: 'Email already exists' })
+        .status(error.statusCode)
+        .send({ error: error.name, message: error.message })
       return
     }
 

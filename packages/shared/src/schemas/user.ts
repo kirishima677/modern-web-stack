@@ -1,6 +1,10 @@
 import { z } from 'zod'
 
-const nameSchema = z.string().trim().min(1, 'Name is required')
+const nameSchema = z
+  .string()
+  .trim()
+  .min(1, 'Name is required')
+  .max(50, 'Name must be 50 characters or less')
 const emailSchema = z
   .string()
   .trim()

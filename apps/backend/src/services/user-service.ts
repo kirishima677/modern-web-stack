@@ -1,86 +1,78 @@
-import { eq } from 'drizzle-orm'
-import {
-  createUserInputSchema,
-  updateUserInputSchema,
-  type CreateUserInput,
-  type UpdateUserInput,
-  type User,
+import type {
+  CreateUserInput,
+  UpdateUserInput,
+  User as SharedUser,
 } from '@modern-web-stack/shared'
 
-import type { DatabaseClient } from '../db/client.js'
-import { usersTable } from '../db/schema.js'
-import { AppError } from '../errors.js'
+import { User } from '../domain/user.js'
+import { DuplicateEmailError, UserNotFoundError } from '../errors.js'
+import type { UserRepository } from '../repositories/user-repository.js'
 
 export interface UserService {
-  list(): Promise<User[]>
-  getById(id: string): Promise<User | null>
-  create(input: CreateUserInput): Promise<User>
-  update(id: string, input: UpdateUserInput): Promise<User | null>
-  remove(id: string): Promise<boolean>
+  list(): Promise<SharedUser[]>
+  getById(id: string): Promise<SharedUser>
+  create(input: CreateUserInput): Promise<SharedUser>
+  update(id: string, input: UpdateUserInput): Promise<SharedUser>
+  remove(id: string): Promise<void>
 }
 
-const toUser = (row: typeof usersTable.$inferSelect): User => ({
-  id: row.id,
-  name: row.name,
-  email: row.email,
-  createdAt: row.createdAt.toISOString(),
-  updatedAt: row.updatedAt.toISOString(),
+const toSharedUser = (user: User): SharedUser => ({
+  id: user.id,
+  name: user.name,
+  email: user.email,
+  createdAt: user.createdAt.toISOString(),
+  updatedAt: user.updatedAt.toISOString(),
 })
 
-export const createDatabaseUserService = (db: DatabaseClient): UserService => ({
+export const createUserService = (repository: UserRepository): UserService => ({
   async list() {
-    const rows = await db
-      .select()
-      .from(usersTable)
-      .orderBy(usersTable.createdAt)
-    return rows.map(toUser)
+    const users = await repository.findAll()
+    return users.map(toSharedUser)
   },
+
   async getById(id) {
-    const row = await db.query.usersTable.findFirst({
-      where: eq(usersTable.id, id),
-    })
-
-    return row ? toUser(row) : null
+    const user = await repository.findById(id)
+    if (!user) {
+      throw new UserNotFoundError()
+    }
+    return toSharedUser(user)
   },
-  async create(input) {
-    const parsed = createUserInputSchema.parse(input)
-    const now = new Date()
-    const [row] = await db
-      .insert(usersTable)
-      .values({
-        id: crypto.randomUUID(),
-        name: parsed.name,
-        email: parsed.email,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .returning()
 
-    if (!row) {
-      throw new AppError(500, 'Failed to create user')
+  async create(input) {
+    const existing = await repository.findByEmail(input.email.trim().toLowerCase())
+    if (existing) {
+      throw new DuplicateEmailError()
     }
 
-    return toUser(row)
-  },
-  async update(id, input) {
-    const parsed = updateUserInputSchema.parse(input)
-    const [row] = await db
-      .update(usersTable)
-      .set({
-        name: parsed.name,
-        email: parsed.email,
-        updatedAt: new Date(),
-      })
-      .where(eq(usersTable.id, id))
-      .returning()
+    const now = new Date()
+    const user = User.create({
+      id: crypto.randomUUID(),
+      name: input.name,
+      email: input.email,
+      createdAt: now,
+      updatedAt: now,
+    })
 
-    return row ? toUser(row) : null
+    const saved = await repository.insert(user)
+    return toSharedUser(saved)
   },
+
+  async update(id, input) {
+    const existing = await repository.findById(id)
+    if (!existing) {
+      throw new UserNotFoundError()
+    }
+
+    const updated = existing.changeName(input.name).changeEmail(input.email)
+    const saved = await repository.update(updated)
+    return toSharedUser(saved)
+  },
+
   async remove(id) {
-    const deletedRows = await db
-      .delete(usersTable)
-      .where(eq(usersTable.id, id))
-      .returning({ id: usersTable.id })
-    return deletedRows.length > 0
+    const existing = await repository.findById(id)
+    if (!existing) {
+      throw new UserNotFoundError()
+    }
+    await repository.delete(id)
   },
 })

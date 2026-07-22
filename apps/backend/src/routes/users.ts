@@ -5,7 +5,7 @@ import {
 import type { FastifyPluginCallback } from 'fastify'
 import { z } from 'zod'
 
-import { AppError, formatZodError } from '../errors.js'
+import { ValidationError, formatZodError } from '../errors.js'
 import type { UserService } from '../services/user-service.js'
 
 const paramsSchema = z.object({
@@ -24,21 +24,17 @@ const usersRoutes: FastifyPluginCallback<{ userService: UserService }> = (
   app.get('/users/:id', async (request) => {
     const parsedParams = paramsSchema.safeParse(request.params)
     if (!parsedParams.success) {
-      throw new AppError(400, formatZodError(parsedParams.error))
+      throw new ValidationError(formatZodError(parsedParams.error))
     }
 
     const user = await userService.getById(parsedParams.data.id)
-    if (!user) {
-      throw new AppError(404, 'User not found')
-    }
-
     return { data: user }
   })
 
   app.post('/users', async (request, reply) => {
     const parsedBody = createUserInputSchema.safeParse(request.body)
     if (!parsedBody.success) {
-      throw new AppError(400, formatZodError(parsedBody.error))
+      throw new ValidationError(formatZodError(parsedBody.error))
     }
 
     const user = await userService.create(parsedBody.data)
@@ -49,33 +45,25 @@ const usersRoutes: FastifyPluginCallback<{ userService: UserService }> = (
   app.put('/users/:id', async (request) => {
     const parsedParams = paramsSchema.safeParse(request.params)
     if (!parsedParams.success) {
-      throw new AppError(400, formatZodError(parsedParams.error))
+      throw new ValidationError(formatZodError(parsedParams.error))
     }
 
     const parsedBody = updateUserInputSchema.safeParse(request.body)
     if (!parsedBody.success) {
-      throw new AppError(400, formatZodError(parsedBody.error))
+      throw new ValidationError(formatZodError(parsedBody.error))
     }
 
     const user = await userService.update(parsedParams.data.id, parsedBody.data)
-    if (!user) {
-      throw new AppError(404, 'User not found')
-    }
-
     return { data: user }
   })
 
   app.delete('/users/:id', async (request) => {
     const parsedParams = paramsSchema.safeParse(request.params)
     if (!parsedParams.success) {
-      throw new AppError(400, formatZodError(parsedParams.error))
+      throw new ValidationError(formatZodError(parsedParams.error))
     }
 
-    const removed = await userService.remove(parsedParams.data.id)
-    if (!removed) {
-      throw new AppError(404, 'User not found')
-    }
-
+    await userService.remove(parsedParams.data.id)
     return { data: { id: parsedParams.data.id } }
   })
 
