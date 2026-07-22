@@ -97,7 +97,14 @@ describe('createUserService', () => {
 
 			const repository = createRepositoryMock()
 			repository.findByEmail.mockResolvedValue(null)
-			repository.insert.mockImplementation(async (user) => user)
+			const insertedByRepository = User.reconstruct({
+				id: 'user-created',
+				name: 'Repository Name',
+				email: 'repository@example.com',
+				createdAt: new Date('2024-06-01T12:00:00.000Z'),
+				updatedAt: new Date('2024-06-01T12:00:00.000Z'),
+			})
+			repository.insert.mockResolvedValue(insertedByRepository)
 			const service = createUserService(repository)
 
 			const result = await service.create({ name: '  Bob  ', email: '  BOB@EXAMPLE.COM  ' })
@@ -111,9 +118,9 @@ describe('createUserService', () => {
 			expect(inserted?.updatedAt.toISOString()).toBe('2024-06-01T12:00:00.000Z')
 
 			expect(result).toMatchObject({
-				id: expect.any(String) as string,
-				name: 'Bob',
-				email: 'bob@example.com',
+				id: 'user-created',
+				name: 'Repository Name',
+				email: 'repository@example.com',
 				createdAt: '2024-06-01T12:00:00.000Z',
 				updatedAt: '2024-06-01T12:00:00.000Z',
 			})
@@ -137,9 +144,19 @@ describe('createUserService', () => {
 		})
 
 		it('name と email を更新して SharedUser 形式で返す', async () => {
+			vi.useFakeTimers()
+			vi.setSystemTime(new Date('2024-06-03T12:34:56.000Z'))
+
 			const repository = createRepositoryMock()
 			repository.findById.mockResolvedValue(baseUser)
-			repository.update.mockImplementation(async (user) => user)
+			const updatedByRepository = User.reconstruct({
+				id: 'user-1',
+				name: 'Repository Updated Name',
+				email: 'repository.updated@example.com',
+				createdAt: new Date('2024-01-01T00:00:00.000Z'),
+				updatedAt: new Date('2024-06-03T12:34:56.000Z'),
+			})
+			repository.update.mockResolvedValue(updatedByRepository)
 			const service = createUserService(repository)
 
 			const result = await service.update('user-1', {
@@ -154,13 +171,31 @@ describe('createUserService', () => {
 			expect(updated?.name).toBe('Bob')
 			expect(updated?.email).toBe('bob@example.com')
 			expect(updated?.createdAt.toISOString()).toBe('2024-01-01T00:00:00.000Z')
-			expect(updated?.updatedAt.getTime()).toBeGreaterThan(baseUser.updatedAt.getTime())
+			expect(updated?.updatedAt.toISOString()).toBe('2024-06-03T12:34:56.000Z')
 
 			expect(result).toMatchObject({
 				id: 'user-1',
-				name: 'Bob',
-				email: 'bob@example.com',
+				name: 'Repository Updated Name',
+				email: 'repository.updated@example.com',
+				updatedAt: '2024-06-03T12:34:56.000Z',
 			})
+		})
+
+		it('重複メール更新時に DuplicateEmailError をそのままスローする', async () => {
+			const repository = createRepositoryMock()
+			repository.findById.mockResolvedValue(baseUser)
+			repository.update.mockRejectedValue(new DuplicateEmailError())
+			const service = createUserService(repository)
+
+			await expect(
+				service.update('user-1', {
+					name: 'Bob',
+					email: 'bob@example.com',
+				}),
+			).rejects.toThrow(DuplicateEmailError)
+
+			expect(repository.findById).toHaveBeenCalledWith('user-1')
+			expect(repository.update).toHaveBeenCalledTimes(1)
 		})
 	})
 
