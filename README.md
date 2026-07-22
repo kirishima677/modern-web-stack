@@ -169,13 +169,14 @@ modern-web-stack/
 │   ├── backend/
 │   │   ├── drizzle/
 │   │   ├── src/
-│   │   │   ├── db/
-│   │   │   ├── plugins/
-│   │   │   ├── routes/
-│   │   │   ├── schemas/
-│   │   │   ├── services/
-│   │   │   ├── app.ts
-│   │   │   └── server.ts
+│   │   │   ├── db/            # DB クライアント・スキーマ・マイグレーション
+│   │   │   ├── domain/        # ドメインモデル（User クラス）
+│   │   │   ├── repositories/  # DB アクセス層
+│   │   │   ├── routes/        # ルート定義・入力バリデーション
+│   │   │   ├── services/      # アプリケーションサービス（オーケストレーション）
+│   │   │   ├── errors.ts      # ドメインエラー定義
+│   │   │   ├── app.ts         # Fastify アプリ生成・エラーハンドラー
+│   │   │   └── server.ts      # エントリーポイント
 │   └── frontend/
 │       ├── src/
 │       │   ├── components/
@@ -189,7 +190,7 @@ modern-web-stack/
 │       │   └── main.tsx
 ├── packages/
 │   └── shared/
-│       └── src/
+│       └── src/               # Zod スキーマ・共通型定義
 ├── compose.yaml
 ├── pnpm-workspace.yaml
 ├── package.json
@@ -199,7 +200,84 @@ modern-web-stack/
 └── .env.example
 ```
 
-## 14. API 一覧
+## 14. バックエンドのレイヤー構成
+
+バックエンドは以下の 4 層で構成されています。
+
+```
+Route → Service → Repository → DB
+         ↕
+       Domain
+```
+
+### Domain（`src/domain/`）
+
+ビジネスルールを保持するドメインモデル層です。
+
+- `User` クラスが以下の責務を担います
+  - `User.create(props)` : バリデーションを行いながら新しい `User` インスタンスを生成
+  - `User.reconstruct(props)` : DB などの信頼できるデータから `User` を復元（バリデーション不要）
+  - `changeName(name)` / `changeEmail(email)` : 名前・メールアドレスの変更（ドメインルールを通過）
+- 名前は 1〜50 文字・前後の空白除去、メールは有効な形式・小文字正規化というルールをここで保持します
+- ルート定義や Repository にビジネスロジックを記述しません
+
+### Service（`src/services/`）
+
+アプリケーションロジックを担うオーケストレーション層です。
+
+- ドメインオブジェクトの生成と Repository 呼び出しのみ行います
+- 重複メールチェック（`DuplicateEmailError`）や存在チェック（`UserNotFoundError`）もここで行います
+- DB の詳細には依存せず、`UserRepository` インターフェース経由でアクセスします
+
+### Repository（`src/repositories/`）
+
+DB アクセスのみを担当する永続化層です。
+
+- `UserRepository` インターフェースが定義するメソッド: `findAll`, `findById`, `findByEmail`, `insert`, `update`, `delete`
+- Drizzle ORM を使って PostgreSQL へアクセスします
+- ビジネス判断はここに書きません。DB の結果をドメインオブジェクトに変換して返します
+
+### Route（`src/routes/`）
+
+HTTP リクエストの受付と Zod による入力バリデーションを担当します。
+
+- Zod スキーマで `request.body` / `request.params` を検証し、失敗時は `ValidationError` を投げます
+- バリデーション済みの入力を Service に渡すだけで、ビジネスロジックは持ちません
+
+## 15. Validation の流れ
+
+```
+クライアント
+    │
+    │ HTTP Request
+    ▼
+Route層 (routes/users.ts)
+    │ Zodスキーマ (createUserInputSchema / updateUserInputSchema) で検証
+    │ 失敗 → ValidationError (400)
+    ▼
+Service層 (services/user-service.ts)
+    │ 重複メール確認
+    │ 重複あり → DuplicateEmailError (409)
+    ▼
+Domain層 (domain/user.ts)
+    │ User.create() でドメインルールを検証
+    │ 失敗 → ValidationError (400)
+    ▼
+Repository層 (repositories/user-repository.ts)
+    │ DBアクセス
+    ▼
+PostgreSQL
+```
+
+### エラーとHTTPステータスの対応
+
+| エラークラス          | HTTP ステータス | 説明                         |
+| --------------------- | --------------- | ---------------------------- |
+| `ValidationError`     | 400             | 入力値の形式・制約違反       |
+| `DuplicateEmailError` | 409             | 登録済みのメールアドレス     |
+| `UserNotFoundError`   | 404             | 対象ユーザーが存在しない     |
+
+## 16. API 一覧
 
 - `GET /api/health`
 - `GET /api/users`
@@ -234,10 +312,13 @@ modern-web-stack/
 }
 ```
 
-## 15. 学習上のポイント
+## 17. 学習上のポイント
 
 - `createApp` と `server.ts` を分離し、Fastify `inject` でテストしやすい構成にしています。
-- バックエンドはサービス層を分け、DB 依存をルート定義から切り離しています。
+- ドメイン層に業務ルール（バリデーション・名前変更・メール変更）を集約し、Route や Repository に書きません。
+- Service 層でドメインオブジェクト生成・Repository 呼び出し・重複チェックのみを行います。
+- Repository は DB アクセスのみ担当し、`UserRepository` インターフェースで依存を逆転させています。
+- ドメインエラー（`ValidationError` / `DuplicateEmailError` / `UserNotFoundError`）を Fastify エラーハンドラーで適切な HTTP ステータスに変換します。
 - フロントエンドは TanStack Query で一覧取得・再取得を管理しています。
 - API 入出力は Zod で検証し、フロントとバックで共通スキーマを再利用しています。
 - Vite の `/api` proxy を使うため、開発中はフロントから相対パスで API を呼び出せます。

@@ -3,12 +3,14 @@ import 'dotenv/config'
 import { createApp } from './app.js'
 import { loadEnv } from './config.js'
 import { createDatabaseClient } from './db/client.js'
-import { createDatabaseUserService } from './services/user-service.js'
+import { createDrizzleUserRepository } from './repositories/user-repository.js'
+import { createUserService } from './services/user-service.js'
 
 const startServer = async (): Promise<void> => {
   const env = loadEnv()
   const { db, close } = createDatabaseClient(env.DATABASE_URL)
-  const userService = createDatabaseUserService(db)
+  const userRepository = createDrizzleUserRepository(db)
+  const userService = createUserService(userRepository)
   const app = await createApp({ userService, logger: true })
 
   app.addHook('onClose', async () => {

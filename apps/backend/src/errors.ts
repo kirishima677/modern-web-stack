@@ -10,6 +10,33 @@ export class AppError extends Error {
   }
 }
 
+export class ValidationError extends Error {
+  readonly statusCode = 400
+
+  constructor(message: string) {
+    super(message)
+    this.name = 'ValidationError'
+  }
+}
+
+export class DuplicateEmailError extends Error {
+  readonly statusCode = 409
+
+  constructor(message = 'Email already exists') {
+    super(message)
+    this.name = 'DuplicateEmailError'
+  }
+}
+
+export class UserNotFoundError extends Error {
+  readonly statusCode = 404
+
+  constructor(message = 'User not found') {
+    super(message)
+    this.name = 'UserNotFoundError'
+  }
+}
+
 export const formatZodError = (error: ZodError): string =>
   error.issues.map((issue) => issue.message).join(', ')
 
