@@ -1,5 +1,9 @@
 import cors from '@fastify/cors'
 import Fastify, { type FastifyInstance } from 'fastify'
+import {
+  serializerCompiler,
+  validatorCompiler,
+} from 'fastify-type-provider-zod'
 
 import {
   AppError,
@@ -29,6 +33,9 @@ export const createApp = async ({
 }: CreateAppOptions): Promise<FastifyInstance> => {
   const app = Fastify({ logger })
 
+  app.setValidatorCompiler(validatorCompiler)
+  app.setSerializerCompiler(serializerCompiler)
+
   await app.register(cors, {
     origin: true,
   })
@@ -45,6 +52,17 @@ export const createApp = async ({
       reply
         .status(error.statusCode)
         .send({ error: error.name, message: error.message })
+      return
+    }
+
+    if (error.validation) {
+      const message = Array.isArray(error.validation)
+        ? error.validation.map((validationError) => validationError.message).join(', ')
+        : String(error.validation)
+      reply.status(400).send({
+        error: 'ValidationError',
+        message,
+      })
       return
     }
 

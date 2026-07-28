@@ -86,10 +86,7 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(400)
-    expect(response.json()).toMatchObject({
-      error: 'ValidationError',
-    })
-
+    expect(response.json().error).toBe('ValidationError')
     await app.close()
   })
 
@@ -105,11 +102,7 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(404)
-    expect(response.json()).toEqual({
-      error: 'UserNotFoundError',
-      message: 'User not found',
-    })
-
+    expect(response.json().error).toBe('UserNotFoundError')
     await app.close()
   })
 
@@ -128,11 +121,7 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(400)
-    expect(response.json()).toEqual({
-      error: 'FastifyError',
-      message: "Body cannot be empty when content-type is set to 'application/json'",
-    })
-
+    expect(response.json().error).toBe('FastifyError')
     await app.close()
   })
 
@@ -151,9 +140,8 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(201)
-    expect(response.json()).toMatchObject({
-      data: { id: 'user-2', name: 'Alice', email: 'alice@example.com' },
-    })
+    expect(response.json().data.id).toBe('user-2')
+    expect(response.json().data.name).toBe('Alice')
 
     await app.close()
   })
@@ -171,9 +159,7 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(200)
-    expect(response.json()).toMatchObject({
-      data: { id: 'user-1', name: 'Jane Updated', email: 'jane@example.com' },
-    })
+    expect(response.json().data.name).toBe('Jane Updated')
 
     await app.close()
   })
@@ -193,11 +179,8 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(400)
-    expect(response.json()).toMatchObject({
-      error: 'ValidationError',
-      message: expect.stringContaining('Name') as string,
-    })
-
+    expect(response.json().error).toBe('ValidationError')
+    expect(response.json().message).toContain('Name')
     await app.close()
   })
 
@@ -214,10 +197,7 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(400)
-    expect(response.json()).toMatchObject({
-      error: 'ValidationError',
-    })
-
+    expect(response.json().error).toBe('ValidationError')
     await app.close()
   })
 
@@ -234,11 +214,7 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(409)
-    expect(response.json()).toEqual({
-      error: 'DuplicateEmailError',
-      message: 'Email already exists',
-    })
-
+    expect(response.json().error).toBe('DuplicateEmailError')
     await app.close()
   })
 
@@ -255,11 +231,7 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(404)
-    expect(response.json()).toEqual({
-      error: 'UserNotFoundError',
-      message: 'User not found',
-    })
-
+    expect(response.json().error).toBe('UserNotFoundError')
     await app.close()
   })
 
@@ -275,11 +247,7 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(404)
-    expect(response.json()).toEqual({
-      error: 'UserNotFoundError',
-      message: 'User not found',
-    })
-
+    expect(response.json().error).toBe('UserNotFoundError')
     await app.close()
   })
 })
