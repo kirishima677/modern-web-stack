@@ -5,3 +5,6 @@ coverage
 dist
 apps/backend/.env
 apps/frontend/.env
+apps/backend/output.log
+.pnpm-store/
+apps/backend/test_output.log

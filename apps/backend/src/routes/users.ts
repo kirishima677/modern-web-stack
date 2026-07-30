@@ -2,7 +2,7 @@ import {
   createUserInputSchema,
   updateUserInputSchema,
 } from '@modern-web-stack/shared'
-import type { FastifyPluginCallback } from 'fastify'
+import type { FastifyPluginCallbackZod } from 'fastify-type-provider-zod'
 import { z } from 'zod'
 
 import type { UserService } from '../services/user-service.js'
@@ -11,7 +11,7 @@ const paramsSchema = z.object({
   id: z.string().min(1, 'User id is required'),
 })
 
-const usersRoutes: FastifyPluginCallback<{ userService: UserService }> = (
+const usersRoutes: FastifyPluginCallbackZod<{ userService: UserService }> = (
   app,
   options,
   done,

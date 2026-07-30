@@ -5,9 +5,10 @@ import { config as loadDotenv } from 'dotenv'
 import { z } from 'zod'
 
 const loadEnvironmentFiles = (): void => {
+  const environmentFile = process.env.NODE_ENV === 'test' ? '.env.test' : '.env'
   const candidatePaths = [
-    resolve(process.cwd(), '.env'),
-    resolve(process.cwd(), '../../.env'),
+    resolve(process.cwd(), environmentFile),
+    resolve(process.cwd(), '../../', environmentFile),
   ]
 
   for (const path of candidatePaths) {
