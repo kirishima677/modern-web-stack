@@ -141,6 +141,10 @@ pnpm dev:backend
 
 ## 11. テスト方法
 
+### 通常テスト
+
+単体テスト・コンポーネントテスト・モックを使用した API テストを実行します。PostgreSQL は起動しません。
+
 ```bash
 pnpm test
 ```
@@ -151,6 +155,23 @@ pnpm test
 pnpm --filter @modern-web-stack/backend test
 pnpm --filter @modern-web-stack/frontend test
 ```
+
+### バックエンド統合テスト
+
+実際の PostgreSQL を使用して、ユーザー CRUD API の HTTP レスポンスと DB への永続化内容を検証します。
+
+```bash
+pnpm --filter @modern-web-stack/backend test:integration
+```
+
+このコマンドは以下を自動で行います。
+
+1. テスト専用の `test-db` を起動し、ヘルスチェック完了を待機する
+2. `apps/backend/.env.test` の接続先（`localhost:5433/test_app`）へマイグレーションを実行する
+3. `apps/backend/src/integration/` の統合テストを実行する
+4. 成否にかかわらず `test-db` とテスト専用ボリュームを停止・削除する
+
+`test-db` は開発用の `db` とは、ポート・データベース名・Docker ボリュームを分離しています。そのため、統合テストは開発用 DB（`localhost:5432/app`）のデータを変更しません。
 
 ## 12. lint / format / typecheck 方法
 
