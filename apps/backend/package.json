@@ -8,11 +8,12 @@
     "build": "tsc -p tsconfig.build.json",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run",
+    "test": "vitest run --exclude src/integration/**",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed.ts",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "test:integration": "set -e; trap 'docker compose rm --stop --force test-db; if docker volume inspect modern-web-stack-test-postgres-data >/dev/null 2>&1; then docker volume rm modern-web-stack-test-postgres-data; fi' EXIT; docker compose up --detach --wait test-db; NODE_ENV=test pnpm db:migrate; NODE_ENV=test vitest run src/integration"
   },
   "dependencies": {
     "@fastify/cors": "^11.1.0",
@@ -20,6 +21,7 @@
     "dotenv": "^17.2.1",
     "drizzle-orm": "^0.44.4",
     "fastify": "^5.6.0",
+    "fastify-type-provider-zod": "^7.0.0",
     "postgres": "^3.4.7",
     "zod": "^4.1.5"
   },

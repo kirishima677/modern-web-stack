@@ -20,6 +20,11 @@ export interface CreateAppOptions {
   logger?: boolean
 }
 
+type RequestValidationError = Error & {
+  validation?: ReadonlyArray<{ message?: string }>
+  statusCode?: number
+}
+
 const isDomainError = (
   error: unknown,
 ): error is ValidationError | DuplicateEmailError | UserNotFoundError =>
@@ -40,7 +45,7 @@ export const createApp = async ({
     origin: true,
   })
 
-  app.setErrorHandler((error, _request, reply) => {
+  app.setErrorHandler<RequestValidationError>((error, _request, reply) => {
     if (isDomainError(error)) {
       reply
         .status(error.statusCode)
@@ -56,9 +61,9 @@ export const createApp = async ({
     }
 
     if (error.validation) {
-      const message = Array.isArray(error.validation)
-        ? error.validation.map((validationError) => validationError.message).join(', ')
-        : String(error.validation)
+      const message = error.validation
+        .map((validationError) => validationError.message ?? '')
+        .join(', ')
       reply.status(400).send({
         error: 'ValidationError',
         message,
@@ -67,8 +72,6 @@ export const createApp = async ({
     }
 
     if (
-      error instanceof Error &&
-      'statusCode' in error &&
       typeof error.statusCode === 'number' &&
       error.statusCode >= 400 &&
       error.statusCode < 500

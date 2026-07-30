@@ -3,6 +3,10 @@ import type {
   UpdateUserInput,
   User,
 } from '@modern-web-stack/shared'
+import {
+  apiErrorResponseSchema,
+  userResponseSchema,
+} from '@modern-web-stack/shared'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { createApp } from './app.js'
@@ -86,7 +90,7 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(400)
-    expect(response.json().error).toBe('ValidationError')
+    expect(apiErrorResponseSchema.parse(response.json()).error).toBe('ValidationError')
     await app.close()
   })
 
@@ -102,7 +106,7 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(404)
-    expect(response.json().error).toBe('UserNotFoundError')
+    expect(apiErrorResponseSchema.parse(response.json()).error).toBe('UserNotFoundError')
     await app.close()
   })
 
@@ -121,7 +125,7 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(400)
-    expect(response.json().error).toBe('FastifyError')
+    expect(apiErrorResponseSchema.parse(response.json()).error).toBe('FastifyError')
     await app.close()
   })
 
@@ -140,8 +144,9 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(201)
-    expect(response.json().data.id).toBe('user-2')
-    expect(response.json().data.name).toBe('Alice')
+    const user = userResponseSchema.parse(response.json()).data
+    expect(user.id).toBe('user-2')
+    expect(user.name).toBe('Alice')
 
     await app.close()
   })
@@ -159,7 +164,7 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(200)
-    expect(response.json().data.name).toBe('Jane Updated')
+    expect(userResponseSchema.parse(response.json()).data.name).toBe('Jane Updated')
 
     await app.close()
   })
@@ -179,8 +184,9 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(400)
-    expect(response.json().error).toBe('ValidationError')
-    expect(response.json().message).toContain('Name')
+    const body = apiErrorResponseSchema.parse(response.json())
+    expect(body.error).toBe('ValidationError')
+    expect(body.message).toContain('Name')
     await app.close()
   })
 
@@ -197,7 +203,7 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(400)
-    expect(response.json().error).toBe('ValidationError')
+    expect(apiErrorResponseSchema.parse(response.json()).error).toBe('ValidationError')
     await app.close()
   })
 
@@ -214,7 +220,7 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(409)
-    expect(response.json().error).toBe('DuplicateEmailError')
+    expect(apiErrorResponseSchema.parse(response.json()).error).toBe('DuplicateEmailError')
     await app.close()
   })
 
@@ -231,7 +237,7 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(404)
-    expect(response.json().error).toBe('UserNotFoundError')
+    expect(apiErrorResponseSchema.parse(response.json()).error).toBe('UserNotFoundError')
     await app.close()
   })
 
@@ -247,7 +253,7 @@ describe('createApp', () => {
     })
 
     expect(response.statusCode).toBe(404)
-    expect(response.json().error).toBe('UserNotFoundError')
+    expect(apiErrorResponseSchema.parse(response.json()).error).toBe('UserNotFoundError')
     await app.close()
   })
 })
